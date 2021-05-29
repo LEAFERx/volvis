@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
+import vert from '@/shaders/vert.glsl';
+import frag from '@/shaders/frag.glsl';
+
 export function init(canvas) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#000");
@@ -13,9 +16,14 @@ export function init(canvas) {
   camera.position.set(25, 13, 13);
 
   const geometry = new THREE.BoxGeometry(5, 5, 5);
-  const material = new THREE.MeshPhongMaterial({
-    color: 0x857ebb,
-    shininess: true,
+  // const material = new THREE.MeshPhongMaterial({
+  //   color: 0x857ebb,
+  //   shininess: true,
+  // });
+  const material = new THREE.ShaderMaterial({
+    vertexShader: vert,
+    fragmentShader: frag,
+    // lights: true,
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(0, 2.5, 0);

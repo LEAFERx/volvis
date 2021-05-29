@@ -1,16 +1,19 @@
 <template>
   <div id="app">
     <Scene />
+    <!-- <Upload /> -->
   </div>
 </template>
 
 <script>
-import Scene from './components/Scene.vue'
+import Scene from './components/Scene'
+// import Upload from './components/Upload'
 
 export default {
   name: 'App',
   components: {
     Scene,
+    // Upload,
   },
 };
 </script>
