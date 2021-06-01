@@ -3,14 +3,12 @@ varying vec4 projected_pos;
 uniform sampler2D tex, cubeTex, transferTex;
 uniform float steps;
 uniform float alphaCorrection;
-void FlattenSample3DTexture(vec3 texCoord);
-
 
 void main() {
   pos = position + vec3(0.5,0.5,0.5);
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
-void FlattenSample3DTexture(vec3 texCoord)
+vec4 FlattenSample3DTexture(vec3 texCoord)
 {
   vec4 colorSlice_1, colorSlice_2;
   vec2 texCoordSlice_1, texCoordSlice_2;
@@ -34,5 +32,5 @@ void FlattenSample3DTexture(vec3 texCoord)
   colorSlice_2.rgb = texture2D(transferTex, vec2(colorSlice_2.a, 1.0)).rgb;
 
   float zDifference = mod(texCoord.z * 255.0, 1.0);
-  //return mix(colorSlice_1, colorSlice_2, zDifference);
+  return mix(colorSlice_1, colorSlice_2, zDifference);
 }
