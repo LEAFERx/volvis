@@ -15,7 +15,7 @@ export function init(canvas) {
   const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(25, 13, 13);
 
-  const geometry = new THREE.BoxGeometry(5, 5, 5);
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
   // const material = new THREE.MeshPhongMaterial({
   //   color: 0x857ebb,
   //   shininess: true,
