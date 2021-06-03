@@ -3,8 +3,9 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 import vert from '@/shaders/vert.glsl';
 import frag from '@/shaders/frag.glsl';
+import frag2 from '@/shaders/frag2.glsl';
 
-export function init(canvas) {
+export function init(canvas, data) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#000");
   scene.fog = new THREE.Fog("#eee", 20, 100);
@@ -20,14 +21,33 @@ export function init(canvas) {
   //   color: 0x857ebb,
   //   shininess: true,
   // });
-  const material = new THREE.ShaderMaterial({
+  var cubeMaterial = new THREE.ShaderMaterial({
     vertexShader: vert,
     fragmentShader: frag,
+    side: THREE.BackSide,
     // lights: true,
   });
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.set(0, 2.5, 0);
-  scene.add(mesh);
+
+  var renderTexture;
+
+  var dataTexture = new THREE.DataTexture3D(data, 256, 256, 178); // Now using the teapot
+
+
+  var dataMaterial = new THREE.ShaderMaterial({
+    vertexShader: vert,
+    fragmentShader: frag2,
+    side: THREE.FrontSide,
+    uniforms: {
+      rawObjectTexture: {value: dataTexture}, 
+      backSideTexture: {value: renderTexture}
+    }
+  });
+
+  //!!!!!!!!!
+
+  const cubeMesh = new THREE.Mesh(geometry, cubeMaterial);
+  cubeMesh.position.set(0, 2.5, 0);
+  scene.add(cubeMesh);
 
   const hemLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
   hemLight.position.set(0, 48, 0);
