@@ -8,9 +8,10 @@ uniform sampler2D backSideTexture;
 
 vec3 MapToColor(float alpha){
   // Needs transfer function.
+  return vec3(alpha, alpha, alpha);
 }
 
-void RayMarching(){
+void main(){
   vec2 projectiveUV;
   vec3 backPos = texture2D(backsideTexture, projectiveUV).xyz;
 

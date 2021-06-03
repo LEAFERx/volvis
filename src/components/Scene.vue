@@ -10,10 +10,13 @@ import { init } from '@/render';
 
 export default {
   name: 'Scene',
-  data: () => ({
-    volumeData: null,
-  }),
+  cnvs: null,
+  // vlmdata: () => ({
+  //   volumeData: null,
+  // }),
   mounted() {
+    init(this.$refs.canvas, null); // This line works. 
+    this.cnvs = this.$refs.canvas; 
   },
   methods: {
     onUpload(event) {
@@ -36,8 +39,9 @@ export default {
           }
           data.push(tmp);
         }
-        this.volumeData = data;
-        init(this.$refs.canvas, data);
+        console.log(data);
+        // this.volumeData = data; 
+        // init(this.cnvs, data); // This line does not work.
       };
       reader.readAsArrayBuffer(file);
     },
