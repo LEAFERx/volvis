@@ -1,19 +1,19 @@
 <template>
   <div id="app">
     <Scene />
-    <!-- <Upload /> -->
+    <Upload />
   </div>
 </template>
 
 <script>
 import Scene from './components/Scene'
-// import Upload from './components/Upload'
+import Upload from './components/Upload'
 
 export default {
   name: 'App',
   components: {
     Scene,
-    // Upload,
+    Upload,
   },
 };
 </script>

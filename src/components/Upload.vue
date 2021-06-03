@@ -5,11 +5,11 @@
 </template>
 
 <script>
-import frag from '@/shaders/frag.glsl';
+// import frag from '@/shaders/frag.glsl';
 
 export default {
   mounted() {
-    console.log(frag);
+    // console.log(frag);
   },
   methods: {
     onUpload(event) {
@@ -26,7 +26,7 @@ export default {
           for (let j = 0; j < 256; j++) {
             const tmp1 = new Array();
             for (let k = 0; k < 256; k++) {
-              tmp1.push(view[178 * i + 256 * j + k])
+              tmp1.push(view[178 * 256 * i + 256 * j + k])
             }
             tmp.push(tmp1);
           }

@@ -16,9 +16,9 @@ export default {
 <style scoped>
 #scene {
   width: 100%;
-  height: 100%;
+  height: 90%;
   position: fixed;
   left: 0;
-  top: 0;
+  top: 10%;
 }
 </style>
