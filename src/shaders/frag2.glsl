@@ -1,19 +1,22 @@
+precision highp sampler2D;
+precision highp sampler3D;
+
 varying vec3 frontPos;
-varying vec4 projectivePos;
+varying vec4 projectedCoords;
 
 uniform sampler3D rawObjectTexture;
 
-// Stores the xyz position of backside by RGB values, access by projectivePos
+// Stores the xyz position of backside by RGB values, access by projectedCoords
 uniform sampler2D backSideTexture;
 
-vec3 MapToColor(float alpha){
+vec4 MapToColor(float alpha){
   // Needs transfer function.
-  return vec3(alpha, alpha, alpha);
+  return vec4(alpha);
 }
 
-void main(){
-  vec2 projectiveUV;
-  vec3 backPos = texture2D(backsideTexture, projectiveUV).xyz;
+void main() {
+  vec2 projectiveUV = vec2(((projectedCoords.x / projectedCoords.w) + 1.0) / 2.0, ((projectedCoords.y / projectedCoords.w) + 1.0) / 2.0 );
+  vec3 backPos = texture2D(backSideTexture, projectiveUV).xyz;
 
   vec3 rayVec = backPos - frontPos;
   vec3 dir = normalize(rayVec);
@@ -26,17 +29,17 @@ void main(){
 
   // parameters
   float alphaParam = 1.0;
-  float stepLen = 1.0/256;
+  float stepLen = 1.0 / 512.0;
 
-  while(currLen < maxLen){
-    float intensity = texture3D(rawObjectTexture, currPos);
+  while (currLen < maxLen) {
+    float intensity = texture(rawObjectTexture, currPos).r / 255.0;
     // may need to normalize intensity
     intensity *= alphaParam;
 
     accumulatedColor += MapToColor(intensity) * (1.0 - alpha) * intensity;
 
-    alpha += intensity;
-    if(alpha >= 1.0){
+    alpha += intensity * (1.0 - alpha);
+    if (alpha >= 1.0){
       alpha = 1.0;
       break;
     }
