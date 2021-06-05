@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-import vert from '@/shaders/vert.glsl';
-import frag from '@/shaders/frag.glsl';
+// import vert from '@/shaders/vert.glsl';
+// import frag from '@/shaders/frag.glsl';
 import vert2 from '@/shaders/vert2.glsl';
 import frag2 from '@/shaders/frag2.glsl';
 import { Vector3 } from 'three';
@@ -22,27 +22,27 @@ export function init(canvas, data) {
   // camera.position.set(25, 13, 13);
   camera.position.set(0, 0, -2); // almost full-screen
 
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  // const geometry = new THREE.BoxGeometry(1, 1, 1);
 
-  const renderTarget = new THREE.WebGLRenderTarget(
-    window.innerWidth,
-    window.innerHeight,
-    {
-      minFilter: THREE.NearestFilter,
-      magFilter: THREE.NearestFilter,
-      wrapS: THREE.ClampToEdgeWrapping,
-      wrapT: THREE.ClampToEdgeWrapping,
-      format: THREE.RGBAFormat,
-      type: THREE.FloatType,
-      generateMipmaps: false,
-    },
-  );
+  // const renderTarget = new THREE.WebGLRenderTarget(
+  //   window.innerWidth,
+  //   window.innerHeight,
+  //   {
+  //     minFilter: THREE.NearestFilter,
+  //     magFilter: THREE.NearestFilter,
+  //     wrapS: THREE.ClampToEdgeWrapping,
+  //     wrapT: THREE.ClampToEdgeWrapping,
+  //     format: THREE.RGBAFormat,
+  //     type: THREE.FloatType,
+  //     generateMipmaps: false,
+  //   },
+  // );
 
-  const renderTargetMaterial = new THREE.ShaderMaterial({
-    vertexShader: vert,
-    fragmentShader: frag,
-    side: THREE.BackSide,
-  });
+  // const renderTargetMaterial = new THREE.ShaderMaterial({
+  //   vertexShader: vert,
+  //   fragmentShader: frag,
+  //   side: THREE.BackSide,
+  // });
 
   const dataTexture = new THREE.DataTexture3D(data, 256, 256, 178); // Now using the foot
   dataTexture.format = THREE.RedFormat;
@@ -56,17 +56,18 @@ export function init(canvas, data) {
     fragmentShader: frag2,
     side: THREE.FrontSide,
     uniforms: {
+      worldCoordCameraPos: {value: camera.position },
       rawObjectTexture: { value: dataTexture }, 
-      backSideTexture: { value: renderTarget.texture },
+      // backSideTexture: { value: renderTarget.texture },
       objectSize: { value: new Vector3(256.0, 256.0, 178.0)},
     },
   });
 
-  const renderTargetScene = new THREE.Scene();
-  renderTargetScene.background = new THREE.Color("#000");
-  const renderTargetMesh = new THREE.Mesh(geometry, renderTargetMaterial);
-  renderTargetMesh.position.set(0, 0, 0);
-  renderTargetScene.add(renderTargetMesh);
+  // const renderTargetScene = new THREE.Scene();
+  // renderTargetScene.background = new THREE.Color("#000");
+  // const renderTargetMesh = new THREE.Mesh(geometry, renderTargetMaterial);
+  // renderTargetMesh.position.set(0, 0, 0);
+  // renderTargetScene.add(renderTargetMesh);
 
   // const targetRenderer = new THREE.WebGLRenderer({ antialias: true });
   // targetRenderer.setSize(window.innerWidth, window.innerHeight);
@@ -96,10 +97,10 @@ export function init(canvas, data) {
   function animate() {
     control.update();
 
-    // targetRenderer.render(renderTargetScene, camera);
-    renderer.setRenderTarget(renderTarget);
-    renderer.render(renderTargetScene, camera);
-    renderer.setRenderTarget(null);
+    // // targetRenderer.render(renderTargetScene, camera);
+    // renderer.setRenderTarget(renderTarget);
+    // renderer.render(renderTargetScene, camera);
+    // renderer.setRenderTarget(null);
     renderer.render(scene, camera);
     
     requestAnimationFrame(animate);
