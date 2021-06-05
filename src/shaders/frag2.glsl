@@ -4,6 +4,10 @@ precision highp sampler3D;
 varying vec3 frontPos;
 varying vec4 projectedCoords;
 
+
+uniform vec3 objectSize;
+uniform vec3 stepSize;
+
 uniform sampler3D rawObjectTexture;
 
 // Stores the xyz position of backside by RGB values, access by projectedCoords
@@ -11,7 +15,7 @@ uniform sampler2D backSideTexture;
 
 vec4 MapToColor(float alpha){
   // Needs transfer function.
-  return vec4(alpha);
+  return vec4(alpha + 0.3);
 }
 
 void main() {
@@ -28,12 +32,17 @@ void main() {
   vec4 accumulatedColor = vec4(0.0);
 
   // parameters
-  float alphaParam = 1.0;
-  float stepLen = 1.0 / 512.0;
+  float alphaParam = 0.3;
+  float stepLen = 1.0 / 256.0;
 
   while (currLen < maxLen) {
-    float intensity = texture(rawObjectTexture, currPos).r / 255.0;
-    // may need to normalize intensity
+    vec3 tempPos = currPos;
+    tempPos.y = 1.0 - tempPos.y;  // vertically invert
+
+    tempPos.y *= (objectSize.x / objectSize.y);
+    tempPos.z *= (objectSize.x / objectSize.z);
+
+    float intensity = texture(rawObjectTexture, tempPos).r / 255.0;
     intensity *= alphaParam;
 
     accumulatedColor += MapToColor(intensity) * (1.0 - alpha) * intensity;

@@ -1,6 +1,7 @@
 <template>
   <div>
-    <input type="file" ref="file" @change="onUpload">
+    Info <input type="file" ref="file" @change = "onUploadInfo">
+    Raw File <input type="file" ref="file" @change="onUpload">
     <canvas id="scene" ref="canvas"></canvas>
   </div>
 </template>
@@ -10,7 +11,9 @@ import { init } from '@/render';
 
 export default {
   name: 'Scene',
-  cnvs: null,
+  bits: null,
+  objectSize: (null, null, null),
+  stepSize: (null, null, null),
   // vlmdata: () => ({
   //   volumeData: null,
   // }),
@@ -19,6 +22,23 @@ export default {
     // this.cnvs = this.$refs.canvas; 
   },
   methods: {
+    onUploadInfo(event){
+      const file = event.target.files[0];      
+        const reader = new FileReader();
+        reader.onload = () => {
+        const arr = reader.result;
+        console.log(arr);
+        const view = new Uint8Array(arr);
+        console.log(view);
+        this.bits = view[0];
+        this.objectSize = (view[1], view[2], view[3]);
+        this.stepSize = (view[4], view[5], view[6]);
+        console.log(this.view);
+        console.log(this.objectSize);
+        console.log(this.stepSize);
+      };
+      reader.readAsArrayBuffer(file);
+    },
     onUpload(event) {
       const file = event.target.files[0];
       const reader = new FileReader();

@@ -5,6 +5,7 @@ import vert from '@/shaders/vert.glsl';
 import frag from '@/shaders/frag.glsl';
 import vert2 from '@/shaders/vert2.glsl';
 import frag2 from '@/shaders/frag2.glsl';
+import { Vector3 } from 'three';
 
 export function init(canvas, data) {
 
@@ -43,7 +44,7 @@ export function init(canvas, data) {
     side: THREE.BackSide,
   });
 
-  const dataTexture = new THREE.DataTexture3D(data, 256, 256, 256); // Now using the foot
+  const dataTexture = new THREE.DataTexture3D(data, 256, 256, 178); // Now using the foot
   dataTexture.format = THREE.RedFormat;
   dataTexture.type = THREE.FloatType;
   dataTexture.minFilter = THREE.LinearFilter;
@@ -56,7 +57,8 @@ export function init(canvas, data) {
     side: THREE.FrontSide,
     uniforms: {
       rawObjectTexture: { value: dataTexture }, 
-      backSideTexture: { value: renderTarget.texture }
+      backSideTexture: { value: renderTarget.texture },
+      objectSize: { value: new Vector3(256.0, 256.0, 178.0)},
     },
   });
 
@@ -72,7 +74,8 @@ export function init(canvas, data) {
   // targetRenderer.setRenderTarget(renderTarget);
   // targetRenderer.autoClear = true;
 
-  const dataMesh = new THREE.Mesh(geometry, dataMaterial);
+  const newGeometry = new THREE.BoxGeometry(1, 1, 1);
+  const dataMesh = new THREE.Mesh(newGeometry, dataMaterial);
   dataMesh.position.set(0, 0, 0);
   scene.add(dataMesh);
 
