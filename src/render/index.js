@@ -14,6 +14,10 @@ export function init(canvas, data) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#000");
 
+  const light = new THREE.PointLight("#faa", 1);
+  light.position.set(2, 0, 0);
+  scene.add(light);
+
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.shadowMap.enabled = true;
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -44,7 +48,7 @@ export function init(canvas, data) {
   //   side: THREE.BackSide,
   // });
 
-  const dataTexture = new THREE.DataTexture3D(data, 256, 256, 178); // Now using the foot
+  const dataTexture = new THREE.DataTexture3D(data, 256, 256, 256); // Now using the foot
   dataTexture.format = THREE.RedFormat;
   dataTexture.type = THREE.FloatType;
   dataTexture.minFilter = THREE.LinearFilter;
@@ -55,13 +59,12 @@ export function init(canvas, data) {
     vertexShader: vert2,
     fragmentShader: frag2,
     side: THREE.FrontSide,
-    uniforms: {
-      worldCoordCameraPos: {value: camera.position },
-      rawObjectTexture: { value: dataTexture }, 
-      // backSideTexture: { value: renderTarget.texture },
-      objectSize: { value: new Vector3(256.0, 256.0, 178.0)},
-    },
+    uniforms: THREE.UniformsLib['lights'],
+    lights: true,
   });
+  dataMaterial.uniforms['worldCoordCameraPos'] = { value: camera.position };
+  dataMaterial.uniforms['rawObjectTexture'] = { value: dataTexture };
+  dataMaterial.uniforms['objectSize'] = { value: new Vector3(256.0, 256.0, 256.0) };
 
   // const renderTargetScene = new THREE.Scene();
   // renderTargetScene.background = new THREE.Color("#000");

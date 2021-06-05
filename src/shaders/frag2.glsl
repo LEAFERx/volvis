@@ -10,6 +10,16 @@ uniform vec3 stepSize;
 
 uniform sampler3D rawObjectTexture;
 
+#if NUM_POINT_LIGHTS > 0
+struct PointLight {
+  vec3 position;
+  vec3 color;
+  float decay;
+  float distance;
+};
+uniform PointLight pointLights[NUM_POINT_LIGHTS];
+#endif
+
 // Stores the xyz position of backside by RGB values, access by projectedCoords
 // uniform sampler2D backSideTexture;
 
@@ -46,8 +56,8 @@ void main() {
   // vec3 backPos = texture2D(backSideTexture, projectiveUV).xyz;
   vec3 backPos = RayCastEndPos(cameraPos, normalize(frontPos - cameraPos));
   
-  vec3 testRay = RayCastEndPos(vec3(0.5, 0.5, 0.5), vec3(1, 0, 0));
-  if(length(frontPos - testRay) <= 0.05){
+  vec3 testRay = RayCastEndPos(vec3(0.5, 0.5, 0.5), normalize(pointLights[0].position - vec3(0.5, 0.5, 0.5)));
+  if(length(frontPos - testRay) <= 0.02){
     gl_FragColor = vec4(1, 0, 0, 0);
     return;
   }
@@ -70,18 +80,70 @@ void main() {
   // parameters
   float alphaParam = 0.3;
   float stepLen = 1.0 / 256.0;
+  const int MAX_STEPS = 256;
 
   while (currLen < maxLen) {
     vec3 tempPos = currPos;
     tempPos.y = 1.0 - tempPos.y;  // vertically invert
-
     tempPos.y *= (objectSize.x / objectSize.y);
     tempPos.z *= (objectSize.x / objectSize.z);
 
     float intensity = texture(rawObjectTexture, tempPos).r / 255.0;
     intensity *= alphaParam;
 
+    vec3 lightAccumulatedColor = vec3(0.0);
+#if NUM_POINT_LIGHTS > 0
+    float lightStepLen = 1.0/64.0;
+    const int LIGHT_MAX_STEPS = 64;
+
+    float totalTransmittance = 0.0;
+    for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
+      vec3 lightRayEndPos = RayCastEndPos(currPos, normalize(pointLights[i].position - currPos));
+      
+      // for potential errors
+      if(lightRayEndPos.z == -1.0){
+        gl_FragColor = vec4(lightRayEndPos + vec3(0, 0, 1), 0);
+        return;
+      }
+
+      vec3 lightDir = normalize(lightRayEndPos - currPos);
+      float lightMaxLen = length(lightRayEndPos - currPos);
+      float lightAccumulatedAlpha = 0.0;
+      float transmittance = 1.0;
+
+      // We do not take the current voxel into account.
+      vec3 lightCurrPos = currPos + lightDir * lightStepLen;
+      float lightCurrLen = lightStepLen;
+      float lightAlphaParam = 0.1;
+
+      for(int stp = 0; stp < LIGHT_MAX_STEPS; stp++){
+        vec3 lightTempPos = lightCurrPos;
+        lightTempPos.y = 1.0 - lightTempPos.y;  // vertically invert
+        lightTempPos.y *= (objectSize.x / objectSize.y);
+        lightTempPos.z *= (objectSize.x / objectSize.z);
+
+        float lightIntensity = texture(rawObjectTexture, lightTempPos).r / 255.0;
+        lightIntensity *= lightAlphaParam;
+        
+        // lightAccumulatedColor += pointLights[i].color * lightIntensity * (1.0 - lightAccumulatedAlpha) * lightIntensity;
+
+        lightAccumulatedAlpha += lightIntensity * (1.0 - lightAccumulatedAlpha);
+        transmittance *= exp(-100.0 * lightIntensity * lightStepLen);
+
+        if(lightAccumulatedAlpha >= 1.0 || lightCurrLen > lightMaxLen){
+          break;
+        }
+        lightCurrLen += lightStepLen;
+        lightCurrPos += lightDir * lightStepLen;
+      }
+      totalTransmittance += transmittance;
+      // lightAccumulatedColor *= (lightAccumulatedAlpha) * pointLights[i].color;
+    }
+    // accumulatedColor += vec4(lightAccumulatedColor * 0.5, 0.5);
+    accumulatedColor += totalTransmittance * MapToColor(intensity) * (1.0 - alpha) * intensity;;
+#else
     accumulatedColor += MapToColor(intensity) * (1.0 - alpha) * intensity;
+#endif
 
     alpha += intensity * (1.0 - alpha);
     if (alpha >= 1.0){
