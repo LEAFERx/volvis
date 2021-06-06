@@ -5,21 +5,21 @@
 </template>
 
 <script>
-// import Paper from './components/Paper'
 import Scene from './components/Scene'
-// import Upload from './components/Upload'
 
 export default {
   name: 'App',
   components: {
-    // Paper,
     Scene,
-    // Upload,
   },
 };
 </script>
 
 <style>
+body {
+  margin: 0;
+}
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;

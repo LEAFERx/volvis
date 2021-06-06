@@ -1,95 +1,200 @@
-varying vec3 pos;
-varying vec4 projectedCoords;
+precision highp sampler2D;
+precision highp sampler3D;
 
-// uniform sampler2D tex, cubeTex, transferTex;
-// uniform float steps;
-// uniform float alphaCorrection;
+// The ray start position, in ray space
+varying vec3 frontPos;
+// The world camera position, in ray space
+varying vec3 cameraPos;
+// The inverse view matrix for reconstruct coordinates in world space
+varying mat4 inverseViewMatrix;
 
-const int MAX_STEPS = 887;
+// The dimension of the volume data
+uniform vec3 dimension;
+// The interval of voxels
+uniform vec3 voxelInterval;
+// The texture storing 3d volume data
+uniform sampler3D volumeData;
+// Transfer function textures
+uniform sampler2D tfR;
+uniform sampler2D tfG;
+uniform sampler2D tfB;
+uniform sampler2D tfA;
 
-void main() {
-  // The fragment's world space coordinates as fragement output
-  gl_FragColor = vec4(pos, 1.0);
+// How many sample should we take along the view ray
+uniform int raySampleNum;
+// How many ray samples should we do per light sample
+uniform int raySamplesPerLightSample;
+// How many sample should we take along the light ray
+uniform int lightSampleNum;
 
-  // // The fragment's second pass
-  // RayMarching(POSITION);
+#if NUM_POINT_LIGHTS > 0
+struct PointLight {
+  vec3 position;
+  vec3 color;
+  float decay;
+  float distance;
+};
+
+uniform PointLight pointLights[NUM_POINT_LIGHTS];
+#endif
+
+// User-defined intensity correction based on transfer function
+float intensityCorrection(float intensity) {
+  vec2 uv = vec2(intensity, 0.5);
+  return texture2D(tfA, uv).r;
 }
 
-// vec4 FlattenSample3DTexture(vec3 texCoord)
-// {
-//   vec4 colorSlice_1, colorSlice_2;
-//   vec2 texCoordSlice_1, texCoordSlice_2;
-//   float zSliceNum_1 = floor(texCoord.z * 255.0);
-//   float zSliceNum_2 = min(zSliceNum_1 + 1.0, 255.0);
+// User-defined intensity to color mapping based on transfer function
+vec3 intensityToColor(float intensity){
+  vec2 uv = vec2(intensity, 0.5);
+  return vec3(texture2D(tfR, uv).r, texture2D(tfG, uv).r, texture2D(tfB, uv).r);
+}
 
-//   texCoord.xy /= 16.0;
+// Calculates the raycast end position from point in dir
+vec3 RayCastEndPos(vec3 point, vec3 dir) {
+	const vec3 boxMin = vec3(0.0);
+	const vec3 boxMax = vec3(1.0);
+	vec3 inv_dir = 1.0 / dir;
+	vec3 tmin_tmp = (boxMin - point) * inv_dir;
+	vec3 tmax_tmp = (boxMax - point) * inv_dir;
 
-//   texCoordSlice_1 = texCoord.xy;
-//   texCoordSlice_2 = texCoord.xy;
+  // min/max on each dimension
+	vec3 tmin = min(tmin_tmp, tmax_tmp);
+	vec3 tmax = max(tmin_tmp, tmax_tmp);
+  
+	float t0 = max(tmin.x, max(tmin.y, tmin.z));
+	float t1 = min(tmax.x, min(tmax.y, tmax.z));
+  if (t0 > t1) {
+    return vec3(0, 1, -1.0);
+  }
+  return point + dir * t1;
+}
 
-//   texCoordSlice_1.x += (mod(zSliceNum_1, 16.0) / 16.0);
-//   texCoordSlice_1.y += floor((255.0 - zSliceNum_1) / 16.0) / 16.0;
-//   texCoordSlice_2.x += (mod(zSliceNum_2, 16.0) / 16.0);
-//   texCoordSlice_2.y += floor((255.0 - zSliceNum_2) / 16.0) / 16.0;
-
-//   colorSlice_1 = texture2D(cubeTex, texCoordSlice_1);
-//   colorSlice_2 = texture2D(cubeTex, texCoordSlice_2);
-
-//   colorSlice_1.rgb = texture2D(transferTex, vec2(colorSlice_1.a, 1.0)).rgb;
-//   colorSlice_2.rgb = texture2D(transferTex, vec2(colorSlice_2.a, 1.0)).rgb;
-
-//   float zDifference = mod(texCoord.z * 255.0, 1.0);
-//   return mix(colorSlice_1, colorSlice_2, zDifference);
-// }
-
-
-// //Maybe this should be moved to frag.glsl??
-// void RayMarching(vec3 backPos) 
-// {
-//   // The front position is the world space position of the second render pass
-//   vec3 frontPos = pos;
-//   if((backPos.x == 0.0) && (backPos.y == 0.0))
-//   {
-//     gl_FragColor = vec4(0.0);
+void main() {
+  // Calculate the end of the ray
+  vec3 backPos = RayCastEndPos(cameraPos, normalize(frontPos - cameraPos));
+  
+// #if NUM_POINT_LIGHTS > 0
+//   vec3 testRay = RayCastEndPos(vec3(0.5), normalize((inverseViewMatrix * vec4(pointLights[0].position, 1.0)).xyz));
+//   if (length(frontPos - testRay) <= 0.02){
+//     gl_FragColor = vec4(1, 0, 0, 0);
 //     return;
 //   }
+// #endif
 
-//   // The direction from the front position to back position
-//   vec3 dir = backPos - frontPos;
-//   float rayLength = length(dir);
+  // Error handling
+  if (backPos.z == -1.0){
+    gl_FragColor = vec4(backPos + vec3(0, 0, 1), 1.0);
+    return;
+  }
 
-//   float delta = 1.0 / steps;
-//   vec3 deltaDirection = normalize(dir) * delta;
-//   float deltaDirectionLength = length(deltaDirection);
+  vec3 rayVec = backPos - frontPos;
+  // Ray direction
+  vec3 dir = normalize(rayVec);
+  // Ray max length
+  float maxLen = length(rayVec);
 
-//   //Start the ray casting from the front position
-//   vec3 currentPosition = frontPos;
-//   vec4 accumulatedColor = vec4(0.0);
-//   float accumulatedAlpha = 0.0;
-//   float accumulatedLength = 0.0;
-  
-//   // It is said that this is a good factor?
-//   float alphaScaleFactor = 25.6 * delta;
+  // Current sample position
+  vec3 currPos = frontPos;
+  // Current smaple length
+  float currLen = 0.0;
+  // Accumulated alpha
+  float alpha = 0.0;
+  // Accumulated color
+  vec3 accumulatedColor = vec3(0.0);
 
-//   vec4 colorSample;
-//   float alphaSample;
+  // parameters
+  float stepLen = 1.0 / float(raySampleNum);
 
-//   for (int i = 0;  i < MAX_STEPS; i++)
-//   {
-//     // colorSample = sampler3D(SOME_KIND_OF_SAMPLER, currentPosition) ???????????????
-//     alphaSample = colorSample.a * alphaCorrection;
-//     alphaSample *= (1.0 - accumulatedAlpha);
-//     alphaSample *= alphaScaleFactor;
-//     accumulatedColor += colorSample * alphaSample;
-//     accumulatedAlpha += alphaSample;
+#if NUM_POINT_LIGHTS > 0
+  int sampleTimes = 0;
+  float lastTransmittance = 0.0;
+#endif
 
-//     currentPosition += deltaDirection;
-//     accumulatedLength += deltaDirectionLength;
+  while (currLen < maxLen) {
+    // Real position in voxel
+    vec3 realPos = currPos;
+    realPos.y = 1.0 - realPos.y;  // vertically invert
+    realPos.y *= (dimension.x / dimension.y);
+    realPos.z *= (dimension.x / dimension.z);
+    
+    // Sample volume data to get voxel intensity
+    float intensity = texture(volumeData, realPos).r / 255.0;
+    // Get color mapping
+    vec3 color = intensityToColor(intensity);
+    // Do intensity correction
+    intensity *= intensityCorrection(intensity);
 
-//     if(accumulatedLength >= rayLength || accumulatedAlpha >= 1.0)
-//     {
-//       break;
-//     }
-//   }
-//   gl_FragColor = accumulatedColor;
-// }
+#if NUM_POINT_LIGHTS > 0
+    if (sampleTimes % raySamplesPerLightSample == 0) {
+      vec3 lightAccumulatedColor = vec3(0.0);
+      float lightStepLen = 1.0 / float(lightSampleNum);
+
+      float totalTransmittance = 0.0;
+      for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
+        vec3 lightPosition = (inverseViewMatrix * vec4(pointLights[i].position, 1.0)).xyz;
+        vec3 lightRayEndPos = RayCastEndPos(currPos, normalize(lightPosition - currPos + vec3(0.5)));
+        
+        // for potential errors
+        if (lightRayEndPos.z == -1.0) {
+          gl_FragColor = vec4(lightRayEndPos + vec3(0, 0, 1), 1.0);
+          return;
+        }
+
+        vec3 lightDir = normalize(lightRayEndPos - currPos);
+        float lightMaxLen = length(lightRayEndPos - currPos);
+        float lightAccumulatedAlpha = 0.0;
+        float transmittance = 1.0;
+
+        // We do not take the current voxel into account.
+        vec3 lightCurrPos = currPos + lightDir * lightStepLen;
+        float lightCurrLen = lightStepLen;
+        float lightAlphaParam = 1.0;
+
+        for (int stp = 0; stp < lightSampleNum; stp++){
+          vec3 lightTempPos = lightCurrPos;
+          lightTempPos.y = 1.0 - lightTempPos.y;  // vertically invert
+          lightTempPos.y *= (dimension.x / dimension.y);
+          lightTempPos.z *= (dimension.x / dimension.z);
+
+          float lightIntensity = texture(volumeData, lightTempPos).r / 255.0;
+          lightIntensity *= lightAlphaParam;
+          
+          // lightAccumulatedColor += pointLights[i].color * lightIntensity * (1.0 - lightAccumulatedAlpha) * lightIntensity;
+
+          lightAccumulatedAlpha += lightIntensity * (1.0 - lightAccumulatedAlpha);
+          transmittance *= exp(-100.0 * lightIntensity * lightStepLen);
+
+          if (lightAccumulatedAlpha >= 1.0 || lightCurrLen > lightMaxLen){
+            break;
+          }
+          lightCurrLen += lightStepLen;
+          lightCurrPos += lightDir * lightStepLen;
+        }
+        totalTransmittance += transmittance;
+        // lightAccumulatedColor *= (lightAccumulatedAlpha) * pointLights[i].color;
+      }
+      lastTransmittance = totalTransmittance;
+      // accumulatedColor += vec4(lightAccumulatedColor * 0.5, 0.5);
+      accumulatedColor += totalTransmittance * color * (1.0 - alpha) * intensity;
+    } else {
+      accumulatedColor += lastTransmittance * color * (1.0 - alpha) * intensity;
+    }
+#else
+    accumulatedColor += color * (1.0 - alpha) * intensity;
+#endif
+
+    // Accumulate alpha
+    alpha += intensity * (1.0 - alpha);
+    // If alpha >= 1.0, ray is totally absorbed, stop
+    if (alpha >= 1.0){
+      alpha = 1.0;
+      break;
+    }
+    // Move to next sample
+    currLen += stepLen;
+    currPos += dir * stepLen;
+  }
+
+  gl_FragColor = vec4(accumulatedColor, 1.0);
+} 

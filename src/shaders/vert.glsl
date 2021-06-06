@@ -1,13 +1,18 @@
-varying vec3 pos;
-varying vec4 projectedCoords;
+// The ray start position, in ray space
+varying vec3 frontPos;
+// The world camera position, in ray space
+varying vec3 cameraPos;
+// The inverse view matrix for reconstruct coordinates in world space
+varying mat4 inverseViewMatrix;
+
+// The camera position in world space
+uniform vec3 worldCoordCameraPos;
+
 
 void main() {
-  // vertexShader first pass
-  pos = position + vec3(0.5, 0.5, 0.5);
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  frontPos = (modelMatrix * vec4(position + vec3(0.5, 0.5, 0.5), 1.0)).xyz;
+  cameraPos = worldCoordCameraPos + vec3(0.5, 0.5, 0.5);
+  inverseViewMatrix = inverse(viewMatrix);
 
-  // //vertexShader second pass
-  // pos = (modelMatrix * vec4(position + vec3(0.5,0.5,0.5), 1.0)).xyz;
-  // gl_Position = projectionMatrix *  modelViewMatrix * vec4( position, 1.0 );
-  // projectedCoords =  projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
