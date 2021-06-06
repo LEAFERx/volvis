@@ -42,6 +42,7 @@ export default {
     gui: null,
     options: {
       data: 'teapot',
+      background: 'black',
       raySampleNum: 512,
       raySamplesPerLightSample: 1,
       lightSampleNum: 8,
@@ -76,6 +77,8 @@ export default {
           renderContext.setRaw(vm.curr);
         }
       });
+    this.gui.add(this.options, 'background', ['black', 'white'])
+      .onFinishChange(() => renderContext.setSceneBackground(vm.options.background));
     this.gui.add(this.options, 'raySampleNum', 1, 512, 1)
       .onFinishChange(() => renderContext.setOptions(vm.options));
     this.gui.add(this.options, 'raySamplesPerLightSample', 1, 64, 1)

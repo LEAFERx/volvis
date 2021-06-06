@@ -84,7 +84,7 @@ void main() {
 
   // Error handling
   if (backPos.z == -1.0){
-    gl_FragColor = vec4(backPos + vec3(0, 0, 1), 1.0);
+    gl_FragColor = vec4(backPos + vec3(0, 0, 1), 0.0);
     return;
   }
 
@@ -137,7 +137,7 @@ void main() {
         
         // for potential errors
         if (lightRayEndPos.z == -1.0) {
-          gl_FragColor = vec4(lightRayEndPos + vec3(0, 0, 1), 1.0);
+          gl_FragColor = vec4(lightRayEndPos + vec3(0, 0, 1), 0.0);
           return;
         }
 
@@ -196,5 +196,5 @@ void main() {
     currPos += dir * stepLen;
   }
 
-  gl_FragColor = vec4(accumulatedColor, 1.0);
+  gl_FragColor = vec4(accumulatedColor, alpha);
 } 

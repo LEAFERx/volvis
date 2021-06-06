@@ -148,6 +148,14 @@ export class RenderContext {
     requestAnimationFrame(this.animate.bind(this));
   }
 
+  setSceneBackground(color) {
+    if (color === 'white') {
+      this.scene.background = new THREE.Color('#fff');
+    } else {
+      this.scene.background = new THREE.Color('#000');
+    }
+  }
+
   setLight1Enable(enable) {
     if (enable) {
       this.scene.add(this.light1, this.light1Helper);
