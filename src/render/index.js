@@ -91,6 +91,8 @@ export class RenderContext {
     if (this.dataMaterial) {
       this.raw = raw;
       this.dataMaterial.uniforms['volumeData'].value = this.makeDataTexture();
+      this.dataMaterial.uniforms['dimension'].value = new THREE.Vector3(...raw.info.dimension);
+      this.dataMaterial.uniforms['voxelInterval'].value = new THREE.Vector3(...raw.info.interval);
     }
   }
 
